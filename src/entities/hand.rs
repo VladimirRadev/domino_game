@@ -1,14 +1,14 @@
 use ggez::{GameResult, graphics::{self, MeshBuilder, DrawMode, Rect, Mesh, DrawParam, FillOptions}, mint::{Point2, Vector2}};
 
-use crate::assets::Assets;
+use crate::assets::{Assets, DominoInHand};
 
 pub struct Hand{
-    some: u32,
+    pub hand : Vec<DominoInHand>,
 }
 impl Hand {
-    pub fn new() -> GameResult<Hand> {
+    pub fn new(vec:Vec<DominoInHand>) -> GameResult<Hand> {
         Ok(Hand {
-            some: 0
+            hand: vec.clone(),
         })
     }
 

@@ -9,8 +9,6 @@ use std::{env, path};
 
 use domino_game::entities::main_state::MainState;
 
- 
-
 
 pub fn main() {
     let conf = Conf {  
@@ -39,9 +37,12 @@ pub fn main() {
         filesystem::mount(&mut ctx, &path, true);
     }
     
-
+  
 
     let state = MainState::new(&mut ctx, &conf).unwrap();
 
+    // for i in 0..6 {
+    //     println!("{:?}   === {:?} ",state.all_dominos[i].points, state.player_hand.hand[i].points);
+    // }
     event::run(ctx, event_loop, state);
 }
