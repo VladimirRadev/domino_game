@@ -13,7 +13,7 @@ impl Assets {
         let mut  skeleton = graphics::Image::from_path(ctx,"/skeleton.png").unwrap();
         let mut grave = graphics::Image::from_path(ctx,"/grave.png").unwrap();
 
-        println!("{} {} {}",empty_cell.height(),skeleton.height(),grave.height());
+        println!("{} {} {} ",empty_cell.height(),skeleton.height(),grave.height());
         Ok(Assets { 
             empty_cell: empty_cell,
             skeleton: skeleton,

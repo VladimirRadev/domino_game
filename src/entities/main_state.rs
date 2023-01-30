@@ -46,7 +46,8 @@ impl event::EventHandler for MainState {
         let mut canvas = graphics::Canvas::from_frame(ctx, red);
 
         self.game_board.draw(&mut canvas, &self.assets);
-        
+        self.player_hand.draw(&mut canvas,ctx, &self.assets);
+
         canvas.finish(ctx)?;
         Ok(())
     }
