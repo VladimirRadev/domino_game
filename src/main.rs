@@ -1,8 +1,47 @@
-use domino_game::fibonachhi;
+use ggez::input::keyboard;
+use ggez::{ContextBuilder, Context, GameResult}; 
+use ggez::conf::{Conf, WindowMode, WindowSetup};
+use ggez::filesystem;
+use ggez::event;
+use ggez::mint::Point2;
 
-fn main() 
-{
+use std::{env, path};
+
+use domino_game::entities::main_state::MainState;
+
+ 
+
+
+pub fn main() {
+    let conf = Conf {  
+        window_setup: WindowSetup { title: "Domino Game".to_owned(), ..Default::default() },
+        window_mode: WindowMode {
+            width: 1000.0,
+            height: 1000.0,
+            ..Default::default()
+        },
+        ..Default::default()
+    };
+
     
-    println!("{}",fibonachhi(3));
+    let (mut ctx, event_loop) = ContextBuilder::new("domino_game", "Vladimir").
+        default_conf(conf.clone()).
+        build().
+        unwrap();
     
+    
+    
+        // We add the CARGO_MANIFEST_DIR/resources do the filesystems paths so
+    // we we look in the cargo project for files.
+    if let Ok(manifest_dir) = env::var("CARGO_MANIFEST_DIR") {
+        let mut path = path::PathBuf::from(manifest_dir);
+        path.push("resources");
+        filesystem::mount(&mut ctx, &path, true);
+    }
+    
+
+
+    let state = MainState::new(&mut ctx, &conf).unwrap();
+
+    event::run(ctx, event_loop, state);
 }
