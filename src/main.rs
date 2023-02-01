@@ -1,3 +1,4 @@
+use domino_game::assets::DominoOnTable;
 use ggez::input::keyboard;
 use ggez::{ContextBuilder, Context, GameResult}; 
 use ggez::conf::{Conf, WindowMode, WindowSetup};
@@ -39,10 +40,20 @@ pub fn main() {
     
   
 
-    let state = MainState::new(&mut ctx, &conf).unwrap();
+    let mut state = MainState::new(&mut ctx, &conf).unwrap();
 
     // for i in 0..6 {
     //     println!("{:?}   === {:?} ",state.all_dominos[i].points, state.player_hand.hand[i].points);
     // }
+
+    //state.game_board.dominos.push(DominoOnTable::new((0,1), 3, 0, 2.0).unwrap());
+    state.game_board.dominos.push(DominoOnTable::new((4,4), 6, 7, 1.0).unwrap());
+    //state.game_board.dominos.push(DominoOnTable::new((3,6), 7, 6, 3.0).unwrap());
+   // state.game_board.dominos.push(DominoOnTable::new((2,3), 0, 1, 0.0).unwrap());
+
+
+    for i in state.player_hand.hand.iter() {
+        println!("{:?}", i);
+    }
     event::run(ctx, event_loop, state);
 }
