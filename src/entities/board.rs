@@ -8,6 +8,8 @@ use ggez::{
     mint::{Point2, Vector2},
     Context, GameResult,
 };
+
+use crate::entities::hand::Hand;
 pub struct Board {
     pub board: [[BoardCell; 8]; 8],
     pub starting_point: Point2<f32>,
@@ -213,6 +215,11 @@ impl Board {
                 _ => (),
             };
         }
+    }
+    //to do domino logic
+    pub fn check_boundary_of_release(&self, mouse_position: Point2<f32>, hand : &mut Hand) -> (bool, (usize,usize)) {
+        
+        (false,(0,0))
     }
 }
 

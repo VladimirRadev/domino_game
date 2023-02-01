@@ -4,6 +4,8 @@ use ggez::Context;
 use ggez::GameResult;
 use ggez::mint::Point2;
 use dynamic_matrix::{dynamic_matrix, DynamicMatrix};
+
+use crate::entities::enums::DominoInHandState;
 pub struct Assets {
     pub empty_cell: graphics::Image,
     pub skeleton: graphics::Image,
@@ -68,12 +70,12 @@ pub struct DominoInHand {
     pub points: (u16, u16),
     pub position: Point2<f32>,
     pub rotation: f32,
-    pub visible: bool,
+    pub state: DominoInHandState,
 }
 impl DominoInHand {
-    pub fn new(points: (u16,u16),position : Point2<f32>,rotation: f32,visible : bool) -> GameResult<DominoInHand>{
+    pub fn new(points: (u16,u16),position : Point2<f32>,rotation: f32,state : DominoInHandState) -> GameResult<DominoInHand>{
         Ok(DominoInHand {
-            points,position,rotation,visible
+            points,position,rotation,state
         })
     }
 }

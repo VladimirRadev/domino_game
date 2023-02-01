@@ -52,6 +52,10 @@ pub fn main() {
    // state.game_board.dominos.push(DominoOnTable::new((2,3), 0, 1, 0.0).unwrap());
 
 
+    // for i in state.player_hand.hand.iter() {
+    //     println!("{:?}", i);
+    // }
+   
     for i in state.player_hand.hand.iter() {
         println!("{:?}", i);
     }
