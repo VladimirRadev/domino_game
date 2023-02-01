@@ -14,8 +14,8 @@ use rand::{thread_rng, Rng};
 pub struct MainState {
     assets: Assets,
     all_dominos: Vec<DominoInHand>,
-    game_board: Board,
-    player_hand: Hand,
+    pub game_board: Board,
+    pub player_hand: Hand,
     top_panel: TopPanel,
     screen_width: f32,
     screen_heigth: f32,
@@ -24,12 +24,34 @@ pub struct MainState {
 impl MainState {
     pub fn new(ctx: &mut Context, conf: &Conf) -> GameResult<MainState> {
         let screen_width = conf.window_mode.width;
-        let screen_height = conf.window_mode.height; 
+        let screen_height = conf.window_mode.height;
+
+        let hand_panel_offset_from_start = 116.0 as f32; 
+        let hand_panel_y_start = 744.0 as f32;
+        let card_width = 128.0 as f32;
+
+
         let all_dominos = all();
         let mut player_hand:Vec<DominoInHand> = Vec::new();
         for i in 0..6 {
-            player_hand.push(all_dominos[i]);
+            let mut dominInHand = all_dominos[i].clone();
+            dominInHand.position = Point2 { 
+                x: hand_panel_offset_from_start + (i as f32 * card_width) as f32,
+                y: hand_panel_y_start
+            };
+            dominInHand.visible=true;
+            player_hand.push(dominInHand);
         }
+        let mut second_row_x= hand_panel_offset_from_start  + card_width;
+        let mut second_row_y = hand_panel_y_start + card_width;
+        for i in 0..4 {
+            let mut dominInHand = DominoInHand::new((0,0), Point2 { 
+                 x: second_row_x + (i as f32)*card_width, y: second_row_y },
+                 0.0,
+                 false).unwrap();
+            player_hand.push(dominInHand);
+        }
+
         
 
         Ok(MainState {
@@ -39,7 +61,6 @@ impl MainState {
 
             game_board: Board::new(Point2 { x: 180.0 as f32, y: 100.0 }).unwrap(),
 
-            //tuka kur
             player_hand: Hand::new(player_hand.clone()).unwrap(),
            
            
@@ -73,34 +94,34 @@ impl event::EventHandler for MainState {
 pub fn all() -> Vec<DominoInHand>
 {
   let mut vec= vec![
-    DominoInHand::new((0,0), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((0,1), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((0,2), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((0,3), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((0,4), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((0,5), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((0,6), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((1,1), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((1,2), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((1,3), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((1,4), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((1,5), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((1,6), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((2,2), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((2,3), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((2,4), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((2,5), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((2,6), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((3,3), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((3,4), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((3,5), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((3,6), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((4,4), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((4,5), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((4,6), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((5,5), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((5,6), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
-    DominoInHand::new((6,6), Point2 { x: 0.0, y: 0.0 } , 0).unwrap(),
+    DominoInHand::new((0,0), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((0,1), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((0,2), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((0,3), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((0,4), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((0,5), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((0,6), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((1,1), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((1,2), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((1,3), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((1,4), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((1,5), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((1,6), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((2,2), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((2,3), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((2,4), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((2,5), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((2,6), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((3,3), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((3,4), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((3,5), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((3,6), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((4,4), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((4,5), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((4,6), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((5,5), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((5,6), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
+    DominoInHand::new((6,6), Point2 { x: 0.0, y: 0.0 } , 0.0, false).unwrap(),
   ];
   vec.shuffle(&mut thread_rng());
   vec
