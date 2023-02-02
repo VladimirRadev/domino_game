@@ -7,14 +7,20 @@ use ggez::{Context, GameResult, event, graphics};
 use ggez::mint::Point2;
 use rand::seq::SliceRandom;
 
-use crate::assets::{Assets, DominoInHand};
+use crate::assets::{Assets, DominoInHand, DominoOnTable};
 use crate::entities::board::Board;
+use crate::entities::enums::BoardCell;
 use crate::entities::hand::Hand;
 use crate::entities::top_panel::TopPanel;
 
 use rand::{thread_rng, Rng};
 
 use super::enums::{PlayerState, DominoInHandState};
+
+
+const skeletonHealth:usize = 4;
+const gravesCount: usize = 1;
+
 pub struct MainState {
     assets: Assets,
     all_dominos: Vec<DominoInHand>,
@@ -106,7 +112,8 @@ impl event::EventHandler for MainState {
 
                 if ctx.mouse.button_just_released(MouseButton::Left) {
                     let mouse_position = ctx.mouse.position();
-                    let res = self.game_board.check_boundary_of_release(mouse_position, &mut self.player_hand);
+                    let res = Board::check_boundary_of_release(&self.game_board, mouse_position, &mut self.player_hand, index_of_domino_in_hand);
+                    println!("{:?}",res);
                     if !res.0 {
                         let index = *index_of_domino_in_hand;
                         self.player_hand.update_domino_position(index, Point2 { x: *remember_x, y: *remember_y },ctx,seconds);
@@ -115,8 +122,28 @@ impl event::EventHandler for MainState {
                         self.player_hand.hand[index].rotation = 0.0;
                         continue;
                     }
+                    //pinned
+                    self.game_board.update_cell(res.1,BoardCell::Domino { point: self.player_hand.hand[*index_of_domino_in_hand].points.0 });
                     
-                    //
+                    //other
+                    self.game_board.update_cell(res.2, BoardCell::Domino { point: self.player_hand.hand[*index_of_domino_in_hand].points.1 }); 
+
+                    self.game_board.add_domino_on_table(DominoOnTable::new(
+                        (self.player_hand.hand[*index_of_domino_in_hand].points.0,self.player_hand.hand[*index_of_domino_in_hand].points.1),
+                        (res.1).0 as u16, 
+                        (res.1).1 as u16,
+                        self.player_hand.hand[*index_of_domino_in_hand].rotation).unwrap());
+
+                    
+                    self.player_hand.hand[*index_of_domino_in_hand].rotation=0.0;
+                    self.player_hand.hand[*index_of_domino_in_hand].state=DominoInHandState::Visible(false);
+                    self.player_state= PlayerState::Active;
+                    
+                    self.game_board.update_skeletons(res);
+                    if self.game_board.all_skeletons_are_dead() {
+                        println!("Pechelishhhh yeah");
+                    }
+                    //to do the levelwon, gamewon,gameloss etc and toppanel logic
                 }
                 
             },

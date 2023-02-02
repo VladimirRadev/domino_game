@@ -8,6 +8,7 @@ use ggez::{
     mint::{Point2, Vector2},
     Context, GameResult,
 };
+use rand::Rng;
 
 use crate::entities::hand::Hand;
 pub struct Board {
@@ -18,22 +19,25 @@ pub struct Board {
 impl Board {
     pub fn new(starting_point: Point2<f32>) -> GameResult<Board> {
         let mut board = [[BoardCell::None; 8]; 8];
-        board[0][1] = BoardCell::Skeleton {
-            health: 9,
+        // board[0][1] = BoardCell::Skeleton {
+        //     health: 9,
+        //     row: 0,
+        //     col: 0,
+        // };
+        board[3][5] = BoardCell::Skeleton {
+            health: 7,
             row: 0,
             col: 0,
         };
-        board[3][7] = BoardCell::Skeleton {
-            health: 2,
-            row: 0,
-            col: 0,
-        };
-        board[5][4] = BoardCell::Grave;
-
+        board[2][2] = BoardCell::Grave;
+        board[3][3] = BoardCell::Domino { point: 1 };
+        board[3][4] = BoardCell::Domino { point: 4 };
+        
         Ok(Board {
             board: board,
             starting_point: starting_point,
-            dominos: Vec::new(),
+            dominos: vec![DominoOnTable::new((1,4), 3, 3, 3.0).unwrap()]
+            //dominos: Vec::new(),
         })
     }
 
@@ -78,6 +82,7 @@ impl Board {
                     BoardCell::None => {
                         canvas.draw(&assets.empty_cell, draw_params);
                     }
+                    BoardCell::Domino { point } => (),
                 }
             }
         }
@@ -216,12 +221,673 @@ impl Board {
             };
         }
     }
-    //to do domino logic
-    pub fn check_boundary_of_release(&self, mouse_position: Point2<f32>, hand : &mut Hand) -> (bool, (usize,usize)) {
+   
+    /// returns if it's  posible , pinned : (row,col) , other : (row, col) , 
+    /// health_left of a skelet on pinned and other (i16 , i16) ( if skelet isn't on position .0 or .1  => value = 10  )
+    pub fn check_boundary_of_release(&self, mouse_position: Point2<f32>, hand : &mut Hand , index_of_domino_in_hand: &usize) -> (bool, (usize,usize) , (usize , usize) , (i16,i16)) {
         
-        (false,(0,0))
+        // .0 = x ; .1 = y
+        let mut possible_index_of_pinned = (-1,-1);
+        let starting_x = 165.0;
+        let starting_y = 93.0;
+        for i in 0..self.board.len() {
+            for j in 0 .. self.board[i].len() {
+                let x = starting_x+ (j as f32) * 72.0;
+                let y = starting_y + (i as f32) * 72.0;
+                // println!("\n");
+                // println!("{} {} {} {}",x, y , x + 72.0, y + 72.0);
+                // println!("\n");
+                if (mouse_position.x >= x && mouse_position.x <= x + 72.0) && (mouse_position.y >= y && mouse_position.y <= y + 72.0){
+                    possible_index_of_pinned = (i as i32 ,j as i32);
+                    break;
+                }
+            }
+        }
+        //println!("\n\n\n");
+       // println!("{:?} {:?} {:?} {:?}",mouse_position,possible_index_of_pinned,
+        // hand.hand[*index_of_domino_in_hand] , self.board);
+        if !((possible_index_of_pinned.0 >= 0 && possible_index_of_pinned.0 <= 7) && (possible_index_of_pinned.1 >= 0 && possible_index_of_pinned.1 <= 7)){
+            return  (false,(0,0),(0,0),(10,10));
+        }
+
+        let k =  hand.hand[*index_of_domino_in_hand].rotation;
+        if k == 0.0 {
+
+            //edge case
+           if possible_index_of_pinned.0 + 1 > 7 {
+                return  (false,(0,0),(0,0),(10,10));
+           }  
+           let possible_index_of_pinned: Point2<usize> = Point2 { x: possible_index_of_pinned.0 as usize, y: possible_index_of_pinned.1 as usize };
+           let possible_index_of_other: Point2<usize> = Point2 { x: possible_index_of_pinned.x + 1 as usize, y: possible_index_of_pinned.y as usize };
+           
+           //graves & dominos
+           match (self.board[possible_index_of_pinned.x][possible_index_of_pinned.y], self.board[possible_index_of_other.x][possible_index_of_other.y] ) {
+            (BoardCell::Grave , _) | (_ , BoardCell::Grave) => {
+                 return (false,(0,0),(0,0),(10,10));
+            },
+            (BoardCell::Domino { point } , _ ) | (_ , BoardCell::Domino { point }) => {
+                return (false,(0,0),(0,0),(10,10));
+            }
+            _ => ()
+            };
+            //println!("kur");
+
+            //skeletons  (pinned,other)
+            let mut skeletonHealth : (i16,i16) = (10,10);
+            match  self.board[possible_index_of_pinned.x][possible_index_of_pinned.y] {
+                BoardCell::Skeleton { health, row, col } => {
+                    skeletonHealth.0 = health - (hand.hand[*index_of_domino_in_hand].points.0 as i16);
+                }
+                _ => (),
+            };
+            match  self.board[possible_index_of_other.x][possible_index_of_other.y] {
+                BoardCell::Skeleton { health, row, col } => {
+                    skeletonHealth.1 = health - (hand.hand[*index_of_domino_in_hand].points.1 as i16);
+                }
+                _ => (),
+            };
+
+            
+            let mut matches: Vec<bool> = Vec::new(); 
+            let pinned_point = hand.hand[*index_of_domino_in_hand].points.0;
+            let other_point = hand.hand[*index_of_domino_in_hand].points.1;
+            
+            //pinned
+            if Board::check_indexes((possible_index_of_pinned.x ) as i32 , (possible_index_of_pinned.y as i32- 1) as i32)
+            {
+                
+                match self.board[possible_index_of_pinned.x][possible_index_of_pinned.y - 1] {
+                    BoardCell::Domino { point } => {
+                        if ( point == pinned_point) {
+                            matches.push(true);
+                        }
+                        else {
+                            matches.push(false);
+                        }
+                    },
+                    _ => (),
+                }
+            }
+            if Board::check_indexes((possible_index_of_pinned.x as i32  - 1) as i32 , (possible_index_of_pinned.y) as i32)
+            {
+                match self.board[possible_index_of_pinned.x - 1 ][possible_index_of_pinned.y] {
+                    BoardCell::Domino { point } => {
+                        if ( point == pinned_point) {
+                            matches.push(true);
+                        }
+                        else {
+                            matches.push(false);
+                        }
+                    },
+                    _ => (),
+                }
+            }
+            if Board::check_indexes((possible_index_of_pinned.x ) as i32 , (possible_index_of_pinned.y + 1) as i32)
+            {
+                match self.board[possible_index_of_pinned.x][possible_index_of_pinned.y + 1] {
+                    BoardCell::Domino { point } => {
+                        if ( point == pinned_point) {
+                            matches.push(true);
+                        }
+                        else {
+                            matches.push(false);
+                        }
+                    },
+                    _ => (),
+                }
+            }
+
+            //other
+
+            if Board::check_indexes((possible_index_of_other.x ) as i32 , (possible_index_of_other.y + 1) as i32)
+            {
+                match self.board[possible_index_of_other.x][possible_index_of_other.y + 1] {
+                    BoardCell::Domino { point } => {
+                        if ( point == other_point) {
+                            matches.push(true);
+                        }
+                        else {
+                            matches.push(false);
+                        }
+                    },
+                    _ => (),
+                }
+            }
+
+            if Board::check_indexes((possible_index_of_other.x + 1 ) as i32 , (possible_index_of_other.y) as i32)
+            {
+                match self.board[possible_index_of_other.x + 1][possible_index_of_other.y] {
+                    BoardCell::Domino { point } => {
+                        if ( point == other_point) {
+                            matches.push(true);
+                        }
+                        else {
+                            matches.push(false);
+                        }
+                    },
+                    _ => (),
+                }
+            }
+
+            if Board::check_indexes((possible_index_of_other.x ) as i32 , (possible_index_of_other.y as i32 - 1) as i32)
+            {
+                match self.board[possible_index_of_other.x][possible_index_of_other.y - 1] {
+                    BoardCell::Domino { point } => {
+                        if ( point == other_point) {
+                            matches.push(true);
+                        }
+                        else {
+                            matches.push(false);
+                        }
+                    },
+                    _ => (),
+                }
+            }
+            //println!("{:?}",matches);
+            if matches.contains(&true) {
+                //(bool, (usize,usize) , (usize , usize) , (i16,i16)) 
+                
+                return (true,(possible_index_of_pinned.x,possible_index_of_pinned.y),
+                (possible_index_of_other.x,possible_index_of_other.y),skeletonHealth);
+            }
+            else {
+                return (false,(0,0),(0,0),(10,10))
+            }
+            
+
+
+
+
+            
+        }
+
+        if k == 1.0 {
+              //edge case
+           if possible_index_of_pinned.1 - 1 < 0 {
+            return  (false,(0,0),(0,0),(10,10));
+       }  
+       let possible_index_of_pinned: Point2<usize> = Point2 { x: possible_index_of_pinned.0 as usize, y: possible_index_of_pinned.1 as usize };
+       let possible_index_of_other: Point2<usize> = Point2 { x: possible_index_of_pinned.x as usize, y: possible_index_of_pinned.y - 1 as usize };
+       
+       //graves & dominos
+       match (self.board[possible_index_of_pinned.x][possible_index_of_pinned.y], self.board[possible_index_of_other.x][possible_index_of_other.y] ) {
+        (BoardCell::Grave , _) | (_ , BoardCell::Grave) => {
+             return (false,(0,0),(0,0),(10,10));
+        },
+        (BoardCell::Domino { point } , _ ) | (_ , BoardCell::Domino { point }) => {
+            return (false,(0,0),(0,0),(10,10));
+        }
+        _ => ()
+        };
+
+        //skeletons  (pinned,other)
+        let mut skeletonHealth : (i16,i16) = (10,10);
+        match  self.board[possible_index_of_pinned.x][possible_index_of_pinned.y] {
+            BoardCell::Skeleton { health, row, col } => {
+                skeletonHealth.0 = health - hand.hand[*index_of_domino_in_hand].points.0 as i16;
+            }
+            _ => (),
+        };
+        match  self.board[possible_index_of_other.x][possible_index_of_other.y] {
+            BoardCell::Skeleton { health, row, col } => {
+                skeletonHealth.1 = health - hand.hand[*index_of_domino_in_hand].points.1 as i16;
+            }
+            _ => (),
+        };
+
+        let mut matches: Vec<bool> = Vec::new(); 
+        let pinned_point = hand.hand[*index_of_domino_in_hand].points.0;
+        let other_point = hand.hand[*index_of_domino_in_hand].points.1;
+        
+        //pinned
+        if Board::check_indexes((possible_index_of_pinned.x as i32 - 1 ) as i32 , (possible_index_of_pinned.y) as i32)
+        {
+            match self.board[possible_index_of_pinned.x - 1][possible_index_of_pinned.y] {
+                BoardCell::Domino { point } => {
+                    if ( point == pinned_point) {
+                        matches.push(true);
+                    }
+                    else {
+                        matches.push(false);
+                    }
+                },
+                _ => (),
+            }
+        }
+        if Board::check_indexes((possible_index_of_pinned.x) as i32 , (possible_index_of_pinned.y + 1) as i32)
+        {
+            match self.board[possible_index_of_pinned.x][possible_index_of_pinned.y + 1] {
+                BoardCell::Domino { point } => {
+                    if ( point == pinned_point) {
+                        matches.push(true);
+                    }
+                    else {
+                        matches.push(false);
+                    }
+                },
+                _ => (),
+            }
+        }
+        if Board::check_indexes((possible_index_of_pinned.x + 1 ) as i32 , (possible_index_of_pinned.y) as i32)
+        {
+            match self.board[possible_index_of_pinned.x + 1][possible_index_of_pinned.y] {
+                BoardCell::Domino { point } => {
+                    if ( point == pinned_point) {
+                        matches.push(true);
+                    }
+                    else {
+                        matches.push(false);
+                    }
+                },
+                _ => (),
+            }
+        }
+
+        //other
+
+        if Board::check_indexes((possible_index_of_other.x + 1 ) as i32 , (possible_index_of_other.y ) as i32)
+        {
+            match self.board[possible_index_of_other.x+ 1][possible_index_of_other.y] {
+                BoardCell::Domino { point } => {
+                    if ( point == other_point) {
+                        matches.push(true);
+                    }
+                    else {
+                        matches.push(false);
+                    }
+                },
+                _ => (),
+            }
+        }
+
+        if Board::check_indexes((possible_index_of_other.x  ) as i32 , (possible_index_of_other.y as i32 - 1) as i32)
+        {
+            match self.board[possible_index_of_other.x][possible_index_of_other.y - 1] {
+                BoardCell::Domino { point } => {
+                    if ( point == other_point) {
+                        matches.push(true);
+                    }
+                    else {
+                        matches.push(false);
+                    }
+                },
+                _ => (),
+            }
+        }
+
+        if Board::check_indexes((possible_index_of_other.x as i32 - 1 ) as i32 , (possible_index_of_other.y) as i32)
+        {
+            match self.board[possible_index_of_other.x - 1][possible_index_of_other.y] {
+                BoardCell::Domino { point } => {
+                    if ( point == other_point) {
+                        matches.push(true);
+                    }
+                    else {
+                        matches.push(false);
+                    }
+                },
+                _ => (),
+            }
+        }
+
+        if matches.contains(&true) {
+            //(bool, (usize,usize) , (usize , usize) , (i16,i16)) 
+            return (true,(possible_index_of_pinned.x,possible_index_of_pinned.y),
+            (possible_index_of_other.x,possible_index_of_other.y),skeletonHealth);
+        }
+        else {
+            return (false,(0,0),(0,0),(10,10))
+        }
+   
+        }
+        if k==2.0 {
+                 //edge case
+           if possible_index_of_pinned.0 - 1 < 0 {
+            return  (false,(0,0),(0,0),(10,10));
+       }  
+       let possible_index_of_pinned: Point2<usize> = Point2 { x: possible_index_of_pinned.0 as usize, y: possible_index_of_pinned.1 as usize };
+       let possible_index_of_other: Point2<usize> = Point2 { x: possible_index_of_pinned.x - 1 as usize, y: possible_index_of_pinned.y as usize };
+       
+       //graves & dominos
+       match (self.board[possible_index_of_pinned.x][possible_index_of_pinned.y], self.board[possible_index_of_other.x][possible_index_of_other.y] ) {
+        (BoardCell::Grave , _) | (_ , BoardCell::Grave) => {
+             return (false,(0,0),(0,0),(10,10));
+        },
+        (BoardCell::Domino { point } , _ ) | (_ , BoardCell::Domino { point }) => {
+            return (false,(0,0),(0,0),(10,10));
+        }
+        _ => ()
+        };
+
+        //skeletons  (pinned,other)
+        let mut skeletonHealth : (i16,i16) = (10,10);
+        match  self.board[possible_index_of_pinned.x][possible_index_of_pinned.y] {
+            BoardCell::Skeleton { health, row, col } => {
+                skeletonHealth.0 = health - hand.hand[*index_of_domino_in_hand].points.0 as i16;
+            }
+            _ => (),
+        };
+        match  self.board[possible_index_of_other.x][possible_index_of_other.y] {
+            BoardCell::Skeleton { health, row, col } => {
+                skeletonHealth.1 = health - hand.hand[*index_of_domino_in_hand].points.1 as i16;
+            }
+            _ => (),
+        };
+
+        let mut matches: Vec<bool> = Vec::new(); 
+        let pinned_point = hand.hand[*index_of_domino_in_hand].points.0;
+        let other_point = hand.hand[*index_of_domino_in_hand].points.1;
+        
+        //pinned
+        if Board::check_indexes((possible_index_of_pinned.x ) as i32 , (possible_index_of_pinned.y  as i32 - 1) as i32)
+        {
+            match self.board[possible_index_of_pinned.x ][possible_index_of_pinned.y - 1] {
+                BoardCell::Domino { point } => {
+                    if ( point == pinned_point) {
+                        matches.push(true);
+                    }
+                    else {
+                        matches.push(false);
+                    }
+                },
+                _ => (),
+            }
+        }
+        if Board::check_indexes((possible_index_of_pinned.x + 1) as i32 , (possible_index_of_pinned.y) as i32)
+        {
+            match self.board[possible_index_of_pinned.x + 1][possible_index_of_pinned.y ] {
+                BoardCell::Domino { point } => {
+                    if ( point == pinned_point) {
+                        matches.push(true);
+                    }
+                    else {
+                        matches.push(false);
+                    }
+                },
+                _ => (),
+            }
+        }
+        if Board::check_indexes((possible_index_of_pinned.x ) as i32 , (possible_index_of_pinned.y + 1) as i32)
+        {
+            match self.board[possible_index_of_pinned.x][possible_index_of_pinned.y + 1] {
+                BoardCell::Domino { point } => {
+                    if ( point == pinned_point) {
+                        matches.push(true);
+                    }
+                    else {
+                        matches.push(false);
+                    }
+                },
+                _ => (),
+            }
+        }
+
+        //other
+
+        if Board::check_indexes((possible_index_of_other.x ) as i32 , (possible_index_of_other.y + 1) as i32)
+        {
+            match self.board[possible_index_of_other.x][possible_index_of_other.y + 1] {
+                BoardCell::Domino { point } => {
+                    if ( point == other_point) {
+                        matches.push(true);
+                    }
+                    else {
+                        matches.push(false);
+                    }
+                },
+                _ => (),
+            }
+        }
+
+        if Board::check_indexes((possible_index_of_other.x as i32 -1 ) as i32 , (possible_index_of_other.y) as i32)
+        {
+            match self.board[possible_index_of_other.x - 1][possible_index_of_other.y] {
+                BoardCell::Domino { point } => {
+                    if ( point == other_point) {
+                        matches.push(true);
+                    }
+                    else {
+                        matches.push(false);
+                    }
+                },
+                _ => (),
+            }
+        }
+
+        if Board::check_indexes((possible_index_of_other.x ) as i32 , (possible_index_of_other.y as i32 - 1) as i32)
+        {
+            match self.board[possible_index_of_other.x][possible_index_of_other.y - 1] {
+                BoardCell::Domino { point } => {
+                    if ( point == other_point) {
+                        matches.push(true);
+                    }
+                    else {
+                        matches.push(false);
+                    }
+                },
+                _ => (),
+            }
+        }
+
+        if matches.contains(&true) {
+            //(bool, (usize,usize) , (usize , usize) , (i16,i16)) 
+            return (true,(possible_index_of_pinned.x,possible_index_of_pinned.y),
+            (possible_index_of_other.x,possible_index_of_other.y),skeletonHealth);
+        }
+        else {
+            return (false,(0,0),(0,0),(10,10))
+        }
+   
+        }
+        if k==3.0 {
+                      //edge case
+           if possible_index_of_pinned.1 + 1 > 7 {
+            return  (false,(0,0),(0,0),(10,10));
+       }  
+       let possible_index_of_pinned: Point2<usize> = Point2 { x: possible_index_of_pinned.0 as usize, y: possible_index_of_pinned.1 as usize };
+       let possible_index_of_other: Point2<usize> = Point2 { x: possible_index_of_pinned.x as usize, y: possible_index_of_pinned.y + 1 as usize };
+       
+       //graves & dominos
+       match (self.board[possible_index_of_pinned.x][possible_index_of_pinned.y], self.board[possible_index_of_other.x][possible_index_of_other.y] ) {
+        (BoardCell::Grave , _) | (_ , BoardCell::Grave) => {
+             return (false,(0,0),(0,0),(10,10));
+        },
+        (BoardCell::Domino { point } , _ ) | (_ , BoardCell::Domino { point }) => {
+            return (false,(0,0),(0,0),(10,10));
+        }
+        _ => ()
+        };
+
+        //skeletons  (pinned,other)
+        let mut skeletonHealth : (i16,i16) = (10,10);
+        match  self.board[possible_index_of_pinned.x][possible_index_of_pinned.y] {
+            BoardCell::Skeleton { health, row, col } => {
+                skeletonHealth.0 = health - hand.hand[*index_of_domino_in_hand].points.0 as i16;
+            }
+            _ => (),
+        };
+        match  self.board[possible_index_of_other.x][possible_index_of_other.y] {
+            BoardCell::Skeleton { health, row, col } => {
+                skeletonHealth.1 = health - hand.hand[*index_of_domino_in_hand].points.1 as i16;
+            }
+            _ => (),
+        };
+
+        let mut matches: Vec<bool> = Vec::new(); 
+        let pinned_point = hand.hand[*index_of_domino_in_hand].points.0;
+        let other_point = hand.hand[*index_of_domino_in_hand].points.1;
+        
+        //pinned
+        if Board::check_indexes((possible_index_of_pinned.x + 1) as i32 , (possible_index_of_pinned.y) as i32)
+        {
+            match self.board[possible_index_of_pinned.x + 1][possible_index_of_pinned.y ] {
+                BoardCell::Domino { point } => {
+                    if ( point == pinned_point) {
+                        matches.push(true);
+                    }
+                    else {
+                        matches.push(false);
+                    }
+                },
+                _ => (),
+            }
+        }
+        if Board::check_indexes((possible_index_of_pinned.x ) as i32 , (possible_index_of_pinned.y as i32 - 1) as i32)
+        {
+            match self.board[possible_index_of_pinned.x ][possible_index_of_pinned.y -1] {
+                BoardCell::Domino { point } => {
+                    if ( point == pinned_point) {
+                        matches.push(true);
+                    }
+                    else {
+                        matches.push(false);
+                    }
+                },
+                _ => (),
+            }
+        }
+        if Board::check_indexes((possible_index_of_pinned.x as i32 - 1 ) as i32 , (possible_index_of_pinned.y) as i32)
+        {
+            match self.board[possible_index_of_pinned.x - 1][possible_index_of_pinned.y ] {
+                BoardCell::Domino { point } => {
+                    if ( point == pinned_point) {
+                        matches.push(true);
+                    }
+                    else {
+                        matches.push(false);
+                    }
+                },
+                _ => (),
+            }
+        }
+
+        //other
+
+        if Board::check_indexes((possible_index_of_other.x as i32 - 1 ) as i32 , (possible_index_of_other.y ) as i32)
+        {
+            match self.board[possible_index_of_other.x - 1][possible_index_of_other.y ] {
+                BoardCell::Domino { point } => {
+                    if ( point == other_point) {
+                        matches.push(true);
+                    }
+                    else {
+                        matches.push(false);
+                    }
+                },
+                _ => (),
+            }
+        }
+
+        if Board::check_indexes((possible_index_of_other.x) as i32 , (possible_index_of_other.y + 1) as i32)
+        {
+            match self.board[possible_index_of_other.x ][possible_index_of_other.y + 1] {
+                BoardCell::Domino { point } => {
+                    if ( point == other_point) {
+                        matches.push(true);
+                    }
+                    else {
+                        matches.push(false);
+                    }
+                },
+                _ => (),
+            }
+        }
+
+        if Board::check_indexes((possible_index_of_other.x + 1) as i32 , (possible_index_of_other.y) as i32)
+        {
+            match self.board[possible_index_of_other.x + 1][possible_index_of_other.y] {
+                BoardCell::Domino { point } => {
+                    if ( point == other_point) {
+                        matches.push(true);
+                    }
+                    else {
+                        matches.push(false);
+                    }
+                },
+                _ => (),
+            }
+        }
+
+        if matches.contains(&true) {
+            //(bool, (usize,usize) , (usize , usize) , (i16,i16)) 
+            return (true,(possible_index_of_pinned.x,possible_index_of_pinned.y),
+            (possible_index_of_other.x,possible_index_of_other.y),skeletonHealth);
+        }
+        else {
+            return (false,(0,0),(0,0),(10,10))
+        }
+   
+        }
+
+
+        (false,(0,0),(0,0),(10,10))
+    }
+
+    pub fn check_indexes(x: i32, y:i32) -> bool {
+        if (x>=0 && x<=7 ) && (y >= 0 && y <=7) {
+            return true;
+        }
+        false
+    }
+
+    pub fn update_cell(&mut self, cell: (usize, usize), new_board_cell:  BoardCell) {
+            self.board[cell.0][cell.1] = new_board_cell;
+    }
+
+    pub fn add_domino_on_table(&mut self, new: DominoOnTable) {
+        self.dominos.push(new);
+    }
+   
+    pub fn update_skeletons(&mut self, res: (bool, (usize, usize), (usize, usize), (i16, i16)))  {
+        //pinned
+        let mut rng = rand::thread_rng();
+        if (res.3).0  >= 1 && (res.3).0 <=9 {
+            loop {
+                let a = rng.gen_range(0..7);
+                let b = rng.gen_range(0..7);
+                match &mut self.board[a][b] {
+                    BoardCell::None => {
+                        self.board[a][b]=BoardCell::Skeleton { health: (res.3).0, row: a as u16, col: b as u16 };
+                        break;
+                    }
+                    _ => (),
+                }
+            }
+            
+        }
+        //other
+        if (res.3).1 >= 1 && (res.3).1 <= 9 {
+            loop {
+                let a = rng.gen_range(0..7);
+                let b = rng.gen_range(0..7);
+                match &mut self.board[a][b] {
+                    BoardCell::None => {
+                        self.board[a][b]=BoardCell::Skeleton { health: (res.3).1, row: a as u16, col: b as u16 };
+                        break;
+                    }
+                    _ => (),
+                }
+            }
+        }
+    }
+
+    pub fn all_skeletons_are_dead(&self) -> bool {
+        let mut res : bool = true;
+        for i in 0..self.board.len(){
+            for j in 0.. self.board[i].len() {
+                match self.board[i][j] {
+                    BoardCell::Skeleton { health, row, col } => {
+                        res=false;
+                        return res;
+                    },
+                    _ => (),
+                };
+            }
+        }
+        res
     }
 }
+
 
 
 /* fn draw_dominos_on_table(&mut self, canvas: &mut graphics::Canvas, ctx: &mut ggez::Context) {

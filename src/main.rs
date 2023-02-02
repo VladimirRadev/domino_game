@@ -47,7 +47,7 @@ pub fn main() {
     // }
 
     //state.game_board.dominos.push(DominoOnTable::new((0,1), 3, 0, 2.0).unwrap());
-    state.game_board.dominos.push(DominoOnTable::new((4,4), 6, 7, 1.0).unwrap());
+    //state.game_board.dominos.push(DominoOnTable::new((4,4), 6, 7, 1.0).unwrap());
     //state.game_board.dominos.push(DominoOnTable::new((3,6), 7, 6, 3.0).unwrap());
    // state.game_board.dominos.push(DominoOnTable::new((2,3), 0, 1, 0.0).unwrap());
 
