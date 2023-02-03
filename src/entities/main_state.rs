@@ -22,7 +22,7 @@ use super::enums::{PlayerState, DominoInHandState, GameStatus};
 const skeletons_count: usize = 1;
 const skeletonHealth:usize = 4;
 const gravesCount: usize = 1;
-const level_to_reach: usize = 6;
+const level_to_reach: usize = 2;
 
 pub struct MainState {
     assets: Assets,
@@ -96,29 +96,31 @@ impl MainState {
         }
         self.all_dominos = all();
 
-        let hand_panel_offset_from_start = 116.0 as f32; 
-        let hand_panel_y_start = 744.0 as f32;
-        let card_width = 128.0 as f32;
+        // let hand_panel_offset_from_start = 116.0 as f32; 
+        // let hand_panel_y_start = 744.0 as f32;
+        // let card_width = 128.0 as f32;
 
         for i in 0..6 {
             self.player_hand.hand[i].points = self.all_dominos[i].points;
-            self.player_hand.hand[i].position = Point2 { 
-                x: hand_panel_offset_from_start + (i as f32 * card_width) as f32,
-                y: hand_panel_y_start
-            };
+            // self.player_hand.hand[i].position = Point2 { 
+            //     x: hand_panel_offset_from_start + (i as f32 * card_width) as f32,
+            //     y: hand_panel_y_start
+            // };
             self.player_hand.hand[i].rotation=0.0;
             self.player_hand.hand[i].state=DominoInHandState::Visible(true);
         }
 
-        let mut second_row_x= hand_panel_offset_from_start  + card_width;
-        let mut second_row_y = hand_panel_y_start + card_width;
+        //let mut second_row_x= hand_panel_offset_from_start  + card_width;
+        //let mut second_row_y = hand_panel_y_start + card_width;
 
-        for i in 6..10 {
-
-            self.player_hand.hand[i]= DominoInHand::new((0,0), Point2 { 
+        for i in 0..4 {
+            self.player_hand.hand[i+6].points = (0,0);
+            self.player_hand.hand[i + 6].rotation = 0.0;
+           self.player_hand.hand[i+6].state= DominoInHandState::Visible( false);
+            /*DominoInHand::new((0,0), Point2 { 
                 x: second_row_x + (i as f32)*card_width, y: second_row_y },
                 0.0,
-                DominoInHandState::Visible( false)).unwrap();
+                DominoInHandState::Visible( false)).unwrap(); */
         }
         let mut starting_domino = DominoOnTable::new(self.all_dominos[6].points, 3, 3, 3.0).unwrap();
         self.game_board.board[3][3]= BoardCell::Domino { point: starting_domino.points.0 };
@@ -179,8 +181,29 @@ impl event::EventHandler for MainState {
                         self.player_hand.hand[res.1].state= DominoInHandState::Moving;
                         continue;
                    }
-                   
-                  // let res = self.top_panel.check_boundary_of_deck
+                }
+                if ctx.mouse.button_just_released(MouseButton::Left) { 
+                  // todo self.top_panel.check_boundary_of_deck => draw a card and put it in
+                  // self.player_hand
+                  let mouse_position = ctx.mouse.position();
+                  if self.top_panel.check_boundary_of_deck(mouse_position) {
+                     //println!("znaesh");
+                     if (self.top_panel.lives as i16 - 1 ) < 0 {
+                        self.game.game_status= GameStatus::GameLoss;
+                        break;
+                     }
+                     if self.deck_index >= 28 {
+                        self.game.game_status= GameStatus::GameLoss;
+                        break;
+                     }
+                     self.top_panel.lives-=1;
+                     self.player_hand.replace_domino(self.all_dominos[self.deck_index]);
+                     self.deck_index+=1;
+                     break;
+                  }
+                  
+
+
                 }
             },
             PlayerState::Dragging { remember_x, remember_y, index_of_domino_in_hand } => {
@@ -196,10 +219,10 @@ impl event::EventHandler for MainState {
                     println!("{:?}",res);
                     if !res.0 {
                         let index = *index_of_domino_in_hand;
-                        self.player_hand.update_domino_position(index, Point2 { x: *remember_x, y: *remember_y },ctx,seconds);
-                        self.player_state= PlayerState::Active;
+                        self.player_hand.hand[index].position = Point2{ x: *remember_x, y: *remember_y };
                         self.player_hand.hand[index].state= DominoInHandState::Visible(true);
                         self.player_hand.hand[index].rotation = 0.0;
+                        self.player_state= PlayerState::Active;
                         continue;
                     }
                     //pinned
@@ -215,6 +238,8 @@ impl event::EventHandler for MainState {
                         self.player_hand.hand[*index_of_domino_in_hand].rotation).unwrap());
 
                     
+                    self.player_hand.hand[*index_of_domino_in_hand].points= (0,0);
+                    self.player_hand.hand[*index_of_domino_in_hand].position= Point2{ x: *remember_x, y: *remember_y };
                     self.player_hand.hand[*index_of_domino_in_hand].rotation=0.0;
                     self.player_hand.hand[*index_of_domino_in_hand].state=DominoInHandState::Visible(false);
                     self.player_state= PlayerState::Active;
@@ -273,6 +298,7 @@ impl event::EventHandler for MainState {
             //
         }
         if let GameStatus::GameLoss = self.game.game_status {
+            
             self.top_panel.level = 1;
 
             self.top_panel.game_record.1 +=1;
@@ -296,10 +322,10 @@ impl event::EventHandler for MainState {
     }
 
     fn draw(&mut self, ctx: &mut Context) ->  GameResult<()>  {
-        let purple = graphics::Color::from_rgb(75, 0, 130);
+        let purple = graphics::Color::from_rgb(139, 0, 139);
         let mut canvas = graphics::Canvas::from_frame(ctx, purple);
 
-        self.top_panel.draw();
+        self.top_panel.draw(&mut canvas, ctx,&self.assets);
         self.game_board.draw(&mut canvas, ctx,&self.assets);
         self.player_hand.draw(&mut canvas,ctx, &self.assets);
 

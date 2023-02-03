@@ -71,4 +71,18 @@ impl Hand {
         //every other case index = 10 , they are from [0:9]
         (false, index)
     }
+
+    pub fn replace_domino(&mut self, new_domino: DominoInHand) {
+        let mut index = 0;
+        for i in &self.hand {
+            if let DominoInHandState::Visible(false) = i.state {
+                break;
+            }
+            index+=1;
+        }
+        println!("{:?} {}",self.hand[index] , index);
+        self.hand[index].points = new_domino.points;
+        self.hand[index].rotation=0.0;
+        self.hand[index].state= DominoInHandState::Visible(true);
+    }
 }
