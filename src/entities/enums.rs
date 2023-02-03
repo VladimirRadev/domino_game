@@ -8,8 +8,8 @@ pub enum BoardCell {
 
 #[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub enum GameStatus {
-    GameStarting,
-    GameInProgress,
+    LevelInProgress,
+    LevelWon,
     GameLoss,
     GameWon
 }

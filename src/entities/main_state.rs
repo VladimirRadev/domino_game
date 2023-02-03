@@ -12,14 +12,17 @@ use crate::entities::board::Board;
 use crate::entities::enums::BoardCell;
 use crate::entities::hand::Hand;
 use crate::entities::top_panel::TopPanel;
+use crate::entities::game::Game;
 
 use rand::{thread_rng, Rng};
 
-use super::enums::{PlayerState, DominoInHandState};
+use super::enums::{PlayerState, DominoInHandState, GameStatus};
 
-
+//defaults are 1, 4, 1, 6
+const skeletons_count: usize = 1;
 const skeletonHealth:usize = 4;
 const gravesCount: usize = 1;
+const level_to_reach: usize = 6;
 
 pub struct MainState {
     assets: Assets,
@@ -28,6 +31,8 @@ pub struct MainState {
     pub player_hand: Hand,
     top_panel: TopPanel,
     player_state: PlayerState,
+    game: Game,
+    deck_index: usize,
     screen_width: f32,
     screen_heigth: f32,
 }
@@ -63,23 +68,97 @@ impl MainState {
             player_hand.push(dominInHand);
         }
 
-        
-
+        let starting_domino = DominoOnTable::new(all_dominos[6].points, 3, 3, 3.0).unwrap();
+        let game = Game::new(vec![skeletonHealth as u16 ;skeletons_count], gravesCount as u16, GameStatus::LevelInProgress).unwrap();
         Ok(MainState {
             assets: Assets::new(ctx)?,
             all_dominos: all_dominos.clone(),
 
 
-            game_board: Board::new(Point2 { x: 180.0 as f32, y: 100.0 }).unwrap(),
+            game_board: Board::new(Point2 { x: 180.0 as f32, y: 100.0 },starting_domino,&game).unwrap(),
 
             player_hand: Hand::new(player_hand.clone()).unwrap(),
            
            
-            top_panel: TopPanel::new().unwrap(),
+            top_panel: TopPanel::new(1, 4, (0,0)).unwrap(),
+            game: game,
+            deck_index: 7,
             screen_width: screen_width,
             screen_heigth: screen_height,
             player_state: PlayerState::Active,
         })
+    }
+    pub fn reset (&mut self) {
+        for i in 0..self.game_board.board.len(){
+            for j in 0..self.game_board.board[i].len() {
+                self.game_board.update_cell((i,j), BoardCell::None);
+            }
+        }
+        self.all_dominos = all();
+
+        let hand_panel_offset_from_start = 116.0 as f32; 
+        let hand_panel_y_start = 744.0 as f32;
+        let card_width = 128.0 as f32;
+
+        for i in 0..6 {
+            self.player_hand.hand[i].points = self.all_dominos[i].points;
+            self.player_hand.hand[i].position = Point2 { 
+                x: hand_panel_offset_from_start + (i as f32 * card_width) as f32,
+                y: hand_panel_y_start
+            };
+            self.player_hand.hand[i].rotation=0.0;
+            self.player_hand.hand[i].state=DominoInHandState::Visible(true);
+        }
+
+        let mut second_row_x= hand_panel_offset_from_start  + card_width;
+        let mut second_row_y = hand_panel_y_start + card_width;
+
+        for i in 6..10 {
+
+            self.player_hand.hand[i]= DominoInHand::new((0,0), Point2 { 
+                x: second_row_x + (i as f32)*card_width, y: second_row_y },
+                0.0,
+                DominoInHandState::Visible( false)).unwrap();
+        }
+        let mut starting_domino = DominoOnTable::new(self.all_dominos[6].points, 3, 3, 3.0).unwrap();
+        self.game_board.board[3][3]= BoardCell::Domino { point: starting_domino.points.0 };
+        self.game_board.board[3][4]= BoardCell::Domino { point: starting_domino.points.1 };
+        
+        self.game_board.dominos.clear();
+        self.game_board.dominos.push(starting_domino);
+
+
+        for i in &self.game.skeletons {
+            let mut rng = rand::thread_rng();
+            loop {
+                let x = rng.gen_range(0..=7);
+                let y = rng.gen_range(0..=7);
+                match &self.game_board.board[x][y] {
+                    BoardCell::None => {
+                    self.game_board.board[x][y]=BoardCell::Skeleton { health: *i as i16, row: x as u16, col: y as u16};
+                    break;  
+                    },
+                    _ => continue
+                };
+            }
+        }
+        for i in 0..self.game.graves_count {
+            let mut rng = rand::thread_rng();
+            loop {
+                let x = rng.gen_range(0..=7);
+                let y = rng.gen_range(0..=7);
+                match &self.game_board.board[x][y] {
+                    BoardCell::None => {
+                    self.game_board.board[x][y]=BoardCell::Grave;
+                    break;  
+                    },
+                    _ => continue
+                };
+            }
+        }
+        self.deck_index=7;
+
+
     }
 }
 impl event::EventHandler for MainState {
@@ -93,14 +172,15 @@ impl event::EventHandler for MainState {
                    let mouse_position= ctx.mouse.position();
 
                    let res = self.player_hand.check_boundary_of_click(mouse_position);
-                   if !res.0 {
-                    continue;
+                   if res.0 {
+                    self.player_state = PlayerState::Dragging { remember_x: self.player_hand.hand[res.1].position.x,
+                        remember_y: self.player_hand.hand[res.1].position.y,
+                        index_of_domino_in_hand: res.1 };
+                        self.player_hand.hand[res.1].state= DominoInHandState::Moving;
+                        continue;
                    }
-                   self.player_state = PlayerState::Dragging { remember_x: self.player_hand.hand[res.1].position.x,
-                     remember_y: self.player_hand.hand[res.1].position.y,
-                     index_of_domino_in_hand: res.1 };
-                     self.player_hand.hand[res.1].state= DominoInHandState::Moving;
-                    //self.player_hand.update_domino_position(res.1, mouse_position,ctx,seconds);
+                   
+                  // let res = self.top_panel.check_boundary_of_deck
                 }
             },
             PlayerState::Dragging { remember_x, remember_y, index_of_domino_in_hand } => {
@@ -141,26 +221,89 @@ impl event::EventHandler for MainState {
                     
                     self.game_board.update_skeletons(res);
                     if self.game_board.all_skeletons_are_dead() {
-                        println!("Pechelishhhh yeah");
+                        self.game.game_status= GameStatus::LevelWon;
+                       // println!("Pechelishhhh yeah");
                     }
-                    //to do the levelwon, gamewon,gameloss etc and toppanel logic
                 }
                 
             },
         }
         }
-        //println!("update");
+        //to do the levelwon, gamewon,gameloss etc and toppanel logic
+        
+        if let GameStatus::LevelWon = self.game.game_status {
+            self.top_panel.level+=1;
+            if self.top_panel.level > level_to_reach as u16 {
+                self.game.game_status = GameStatus::GameWon;
+            }
+            else {
+                for i in &mut self.game.skeletons {
+                    *i+=1;
+                }
+                if self.top_panel.level % 2 == 1 {
+                    self.game.graves_count+=1;
+                }
+
+                self.reset();
+                self.game.game_status= GameStatus::LevelInProgress;
+            }
+
+            //test
+            println!("pechelish level:{} -> {} {} {:?}",self.top_panel.level - 1, self.top_panel.level,self.top_panel.lives,self.top_panel.game_record);
+            //
+
+        }
+        if let GameStatus::GameWon = self.game.game_status {
+            self.top_panel.level = 1;
+
+            self.top_panel.game_record.0 +=1;
+            
+            self.top_panel.lives = 4;
+            for i in &mut self.game.skeletons {
+                *i=skeletonHealth as u16;
+            }
+            self.game.graves_count=gravesCount as u16;
+
+            self.reset();
+
+            self.game.game_status= GameStatus::LevelInProgress;
+
+            //test
+            println!("pechelish igrata {} {} {:?}",self.top_panel.level,self.top_panel.lives,self.top_panel.game_record);
+            //
+        }
+        if let GameStatus::GameLoss = self.game.game_status {
+            self.top_panel.level = 1;
+
+            self.top_panel.game_record.1 +=1;
+            
+            self.top_panel.lives = 4;
+            for i in &mut self.game.skeletons {
+                *i=skeletonHealth as u16;
+            }
+            self.game.graves_count=gravesCount as u16;
+
+            self.reset();
+
+            self.game.game_status= GameStatus::LevelInProgress;
+
+            //test
+            println!("gubish igrata {} {} {:?}",self.top_panel.level,self.top_panel.lives,self.top_panel.game_record);
+            //
+        }
+
         Ok(())
     }
 
     fn draw(&mut self, ctx: &mut Context) ->  GameResult<()>  {
         let purple = graphics::Color::from_rgb(75, 0, 130);
         let mut canvas = graphics::Canvas::from_frame(ctx, purple);
-        //println!("draw");
 
+        self.top_panel.draw();
         self.game_board.draw(&mut canvas, ctx,&self.assets);
         self.player_hand.draw(&mut canvas,ctx, &self.assets);
 
+        
         canvas.finish(ctx)?;
         Ok(())
     }
@@ -224,3 +367,4 @@ pub fn all() -> Vec<DominoInHand>
   vec.shuffle(&mut thread_rng());
   vec
 }
+

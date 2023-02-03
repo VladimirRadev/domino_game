@@ -11,33 +11,49 @@ use ggez::{
 use rand::Rng;
 
 use crate::entities::hand::Hand;
+use crate::entities::game::Game;
 pub struct Board {
     pub board: [[BoardCell; 8]; 8],
     pub starting_point: Point2<f32>,
     pub dominos: Vec<DominoOnTable>,
 }
 impl Board {
-    pub fn new(starting_point: Point2<f32>) -> GameResult<Board> {
+    pub fn new(starting_point: Point2<f32>, starting_domino: DominoOnTable, game: &Game) -> GameResult<Board> {
         let mut board = [[BoardCell::None; 8]; 8];
-        // board[0][1] = BoardCell::Skeleton {
-        //     health: 9,
-        //     row: 0,
-        //     col: 0,
-        // };
-        board[3][5] = BoardCell::Skeleton {
-            health: 7,
-            row: 0,
-            col: 0,
-        };
-        board[2][2] = BoardCell::Grave;
-        board[3][3] = BoardCell::Domino { point: 1 };
-        board[3][4] = BoardCell::Domino { point: 4 };
-        
+        board[3][3] = BoardCell::Domino { point: starting_domino.points.0 };
+        board[3][4] = BoardCell::Domino { point: starting_domino.points.1 };
+        for i in &game.skeletons {
+            let mut rng = rand::thread_rng();
+            loop {
+                let x = rng.gen_range(0..=7);
+                let y = rng.gen_range(0..=7);
+                match &board[x][y] {
+                    BoardCell::None => {
+                    board[x][y]=BoardCell::Skeleton { health: *i as i16, row: x as u16, col: y as u16};
+                    break;  
+                    },
+                    _ => continue
+                };
+            }
+        }
+        for i in 0..game.graves_count {
+            let mut rng = rand::thread_rng();
+            loop {
+                let x = rng.gen_range(0..=7);
+                let y = rng.gen_range(0..=7);
+                match &board[x][y] {
+                    BoardCell::None => {
+                    board[x][y]=BoardCell::Grave;
+                    break;  
+                    },
+                    _ => continue
+                };
+            }
+        }
         Ok(Board {
             board: board,
             starting_point: starting_point,
-            dominos: vec![DominoOnTable::new((1,4), 3, 3, 3.0).unwrap()]
-            //dominos: Vec::new(),
+            dominos: vec![starting_domino]
         })
     }
 
