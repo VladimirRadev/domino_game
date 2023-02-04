@@ -22,7 +22,7 @@ use super::enums::{PlayerState, DominoInHandState, GameStatus};
 const skeletons_count: usize = 1;
 const skeletonHealth:usize = 4;
 const gravesCount: usize = 1;
-const level_to_reach: usize = 6;
+const level_to_reach: usize = 2;
 
 pub struct MainState {
     assets: Assets,
@@ -216,7 +216,7 @@ impl event::EventHandler for MainState {
                 if ctx.mouse.button_just_released(MouseButton::Left) {
                     let mouse_position = ctx.mouse.position();
                     let res = Board::check_boundary_of_release(&self.game_board, mouse_position, &mut self.player_hand, index_of_domino_in_hand);
-                    println!("{:?}",res);
+                    //println!("{:?}",res);
                     if !res.0 {
                         let index = *index_of_domino_in_hand;
                         self.player_hand.hand[index].position = Point2{ x: *remember_x, y: *remember_y };
@@ -244,6 +244,24 @@ impl event::EventHandler for MainState {
                     self.player_hand.hand[*index_of_domino_in_hand].state=DominoInHandState::Visible(false);
                     self.player_state= PlayerState::Active;
                     
+                    // ako nqmame karti veche v rukata ni podarqvat 3 ot testeto bez vzimane na
+                    // jivot
+                    if self.player_hand.empty() {
+                        for i in 0..3 {
+                            if self.deck_index == 28 {
+                                self.game.game_status=GameStatus::GameLoss;
+                                break;
+                            }
+                        self.player_hand.replace_domino(self.all_dominos[self.deck_index]);
+                        self.deck_index+=1;
+                        }
+                    }
+                    if let GameStatus::GameLoss = self.game.game_status {
+                        break;
+                    }
+
+                    //
+
                     self.game_board.update_skeletons(res);
                     if self.game_board.all_skeletons_are_dead() {
                         self.game.game_status= GameStatus::LevelWon;

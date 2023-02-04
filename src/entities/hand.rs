@@ -85,4 +85,13 @@ impl Hand {
         self.hand[index].rotation=0.0;
         self.hand[index].state= DominoInHandState::Visible(true);
     }
+
+    pub fn empty(&self) -> bool {
+        for i in &self.hand{
+            if let DominoInHandState::Visible(true)=i.state{
+                return false;
+            }
+        }
+        true
+    }
 }
