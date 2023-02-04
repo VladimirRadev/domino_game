@@ -1,6 +1,6 @@
 use domino_game::assets::DominoOnTable;
 use ggez::input::keyboard;
-use ggez::{ContextBuilder, Context, GameResult}; 
+use ggez::{ContextBuilder, Context, GameResult, graphics}; 
 use ggez::conf::{Conf, WindowMode, WindowSetup};
 use ggez::filesystem;
 use ggez::event;
@@ -38,7 +38,8 @@ pub fn main() {
         filesystem::mount(&mut ctx, &path, true);
     }
     
-  
+    let font = graphics::FontData::from_path(&ctx, "/DejaVuSerif.ttf").unwrap();
+    ctx.gfx.add_font("dejavu_font", font);
 
     let mut state = MainState::new(&mut ctx, &conf).unwrap();
 

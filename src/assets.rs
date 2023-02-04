@@ -12,6 +12,8 @@ pub struct Assets {
     pub grave: graphics::Image,
     pub dominos_images : DynamicMatrix<graphics::Image>,
     pub domino_deck: graphics::Image,
+    pub heart_full: graphics::Image,
+    pub heart_outlined: graphics::Image,
 }
 impl Assets {
     pub fn new(ctx: &mut Context) -> GameResult<Assets> {
@@ -20,6 +22,10 @@ impl Assets {
         let mut grave = graphics::Image::from_path(ctx, "/grave.png").unwrap();
         let mut dominos_images :DynamicMatrix<graphics::Image> =  DynamicMatrix::new_with_cols(7);
         let mut domino_deck = graphics::Image::from_path(ctx, "/domino_deck.png").unwrap();
+        let mut heart_full = graphics::Image::from_path(ctx, "/heart_full.png").unwrap();
+        let mut heart_outlined = graphics::Image::from_path(ctx, "/heart_outlined.png").unwrap();
+
+       
         //println!("{} {}",dominos_images.cols(), dominos_images.rows());
         for i in 0.. 7 {
             let mut vec = Vec::new();
@@ -51,6 +57,8 @@ impl Assets {
             grave: grave,
             dominos_images : dominos_images,
             domino_deck : domino_deck,
+            heart_full: heart_full,
+            heart_outlined: heart_outlined,
         })
     }
 }

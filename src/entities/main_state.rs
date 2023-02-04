@@ -22,7 +22,7 @@ use super::enums::{PlayerState, DominoInHandState, GameStatus};
 const skeletons_count: usize = 1;
 const skeletonHealth:usize = 4;
 const gravesCount: usize = 1;
-const level_to_reach: usize = 2;
+const level_to_reach: usize = 6;
 
 pub struct MainState {
     assets: Assets,
@@ -325,7 +325,7 @@ impl event::EventHandler for MainState {
         let purple = graphics::Color::from_rgb(139, 0, 139);
         let mut canvas = graphics::Canvas::from_frame(ctx, purple);
 
-        self.top_panel.draw(&mut canvas, ctx,&self.assets);
+        self.top_panel.draw(&mut canvas, ctx,&self.assets,&level_to_reach);
         self.game_board.draw(&mut canvas, ctx,&self.assets);
         self.player_hand.draw(&mut canvas,ctx, &self.assets);
 
