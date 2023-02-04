@@ -113,13 +113,13 @@ impl Board {
                     let y = self.starting_point.y + (i.pinned_row as f32) * 80.0;
                     let draw_params = graphics::DrawParam::default()
                         .dest(Point2 { x, y })
-                        .scale(Vector2 { x: 0.90, y: 0.90 })
+                        .scale(Vector2 { x: 0.87, y: 0.87 })
                         .offset(Point2 {
                             x: x / 1000.0,
                             y: y / 1000.0,
-                        })
-                        .rotation((0.0 as f32) * PI / 2.0);
-                    let path = format!("/domino_{}.png", i.points.0);
+                        });
+                    let path = format!("/domino_{}_rotation_{}.png", i.points.0,i.rotation as u16);
+
                     let image = graphics::Image::from_path(ctx, path).unwrap();
                     canvas.draw(&image, draw_params);
 
@@ -128,13 +128,12 @@ impl Board {
                     let y = self.starting_point.y + ((i.pinned_row + 1) as f32) * 80.0;
                     let draw_params = graphics::DrawParam::default()
                         .dest(Point2 { x, y })
-                        .scale(Vector2 { x: 0.90, y: 0.90 })
+                        .scale(Vector2 { x: 0.87, y: 0.87 })
                         .offset(Point2 {
                             x: x / 1000.0,
                             y: y / 1000.0,
-                        })
-                        .rotation((0.0 as f32) * PI / 2.0);
-                    let path = format!("/domino_{}.png", i.points.1);
+                        });
+                    let path = format!("/domino_{}_rotation_{}.png", i.points.1,(i.rotation - 2.0).abs() as u16);
                     let image = graphics::Image::from_path(ctx, path).unwrap();
                     canvas.draw(&image, draw_params);
                     continue;
@@ -145,13 +144,14 @@ impl Board {
                     let y = self.starting_point.y + (i.pinned_row as f32) * 80.0;
                     let draw_params = graphics::DrawParam::default()
                         .dest(Point2 { x, y })
-                        .scale(Vector2 { x: 0.90, y: 0.90 })
+                        .scale(Vector2 { x: 0.87, y: 0.87 })
                         .offset(Point2 {
                             x: x / 1000.0,
                             y: y / 1000.0,
-                        })
-                        .rotation((0.0 as f32) * PI / 2.0);
-                    let path = format!("/domino_{}.png", i.points.0);
+                        });
+                       
+                    let path = format!("/domino_{}_rotation_{}.png", i.points.0,i.rotation as u16);
+
                     let image = graphics::Image::from_path(ctx, path).unwrap();
                     canvas.draw(&image, draw_params);
 
@@ -160,13 +160,13 @@ impl Board {
                     let y = self.starting_point.y + (i.pinned_row as f32) * 80.0;
                     let draw_params = graphics::DrawParam::default()
                         .dest(Point2 { x, y })
-                        .scale(Vector2 { x: 0.90, y: 0.90 })
+                        .scale(Vector2 { x: 0.87, y: 0.87 })
                         .offset(Point2 {
                             x: x / 1000.0,
                             y: y / 1000.0,
-                        })
-                        .rotation((0.0 as f32) * PI / 2.0);
-                    let path = format!("/domino_{}.png", i.points.1);
+                        });
+                        
+                        let path = format!("/domino_{}_rotation_{}.png", i.points.1,(i.rotation + 2.0).abs() as u16);
                     let image = graphics::Image::from_path(ctx, path).unwrap();
                     canvas.draw(&image, draw_params);
                     continue;
@@ -176,13 +176,13 @@ impl Board {
                     let y = self.starting_point.y + (i.pinned_row as f32) * 80.0;
                     let draw_params = graphics::DrawParam::default()
                         .dest(Point2 { x, y })
-                        .scale(Vector2 { x: 0.90, y: 0.90 })
+                        .scale(Vector2 { x: 0.87, y: 0.87 })
                         .offset(Point2 {
                             x: x / 1000.0,
                             y: y / 1000.0,
-                        })
-                        .rotation((0.0 as f32) * PI / 2.0);
-                    let path = format!("/domino_{}.png", i.points.0);
+                        });
+                        let path = format!("/domino_{}_rotation_{}.png", i.points.0,i.rotation as u16);
+
                     let image = graphics::Image::from_path(ctx, path).unwrap();
                     canvas.draw(&image, draw_params);
 
@@ -191,13 +191,13 @@ impl Board {
                     let y = self.starting_point.y + ((i.pinned_row-1) as f32) * 80.0;
                     let draw_params = graphics::DrawParam::default()
                         .dest(Point2 { x, y })
-                        .scale(Vector2 { x: 0.90, y: 0.90 })
+                        .scale(Vector2 { x: 0.87, y: 0.87 })
                         .offset(Point2 {
                             x: x / 1000.0,
                             y: y / 1000.0,
-                        })
-                        .rotation((0.0 as f32) * PI / 2.0);
-                    let path = format!("/domino_{}.png", i.points.1);
+                        });
+    
+                    let path = format!("/domino_{}_rotation_{}.png", i.points.1,(i.rotation - 2.0).abs() as u16);
                     let image = graphics::Image::from_path(ctx, path).unwrap();
                     canvas.draw(&image, draw_params);
                     continue;
@@ -207,13 +207,12 @@ impl Board {
                     let y = self.starting_point.y + (i.pinned_row as f32) * 80.0;
                     let draw_params = graphics::DrawParam::default()
                         .dest(Point2 { x, y })
-                        .scale(Vector2 { x: 0.90, y: 0.90 })
+                        .scale(Vector2 { x: 0.87, y: 0.87 })
                         .offset(Point2 {
                             x: x / 1000.0,
                             y: y / 1000.0,
-                        })
-                        .rotation((0.0 as f32) * PI / 2.0);
-                    let path = format!("/domino_{}.png", i.points.0);
+                        });
+                    let path = format!("/domino_{}_rotation_{}.png", i.points.0,i.rotation as u16);
                     let image = graphics::Image::from_path(ctx, path).unwrap();
                     canvas.draw(&image, draw_params);
 
@@ -222,13 +221,12 @@ impl Board {
                     let y = self.starting_point.y + (i.pinned_row as f32) * 80.0;
                     let draw_params = graphics::DrawParam::default()
                         .dest(Point2 { x, y })
-                        .scale(Vector2 { x: 0.90, y: 0.90 })
+                        .scale(Vector2 { x: 0.87, y: 0.87 })
                         .offset(Point2 {
                             x: x / 1000.0,
                             y: y / 1000.0,
-                        })
-                        .rotation((0.0 as f32) * PI / 2.0);
-                    let path = format!("/domino_{}.png", i.points.1);
+                        });
+                    let path = format!("/domino_{}_rotation_{}.png", i.points.1,(i.rotation - 2.0).abs() as u16);
                     let image = graphics::Image::from_path(ctx, path).unwrap();
                     canvas.draw(&image, draw_params);
                     continue;
