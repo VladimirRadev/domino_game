@@ -89,7 +89,7 @@ impl TopPanel {
     }
 
     pub fn check_boundary_of_deck(&self, mouse_position: Point2<f32>) -> bool {
-        println!("{:?}",mouse_position);
+       // println!("{:?}",mouse_position);
         if (mouse_position.x >= deck_image_x as f32 && mouse_position.x <= deck_image_x as f32 + 64.0) 
             && (mouse_position.y >= deck_image_y as f32 && mouse_position.y <= deck_image_y as f32 + 64.0) {
                 return true;

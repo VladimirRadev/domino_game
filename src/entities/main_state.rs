@@ -96,22 +96,14 @@ impl MainState {
         }
         self.all_dominos = all();
 
-        // let hand_panel_offset_from_start = 116.0 as f32; 
-        // let hand_panel_y_start = 744.0 as f32;
-        // let card_width = 128.0 as f32;
+        
 
         for i in 0..6 {
             self.player_hand.hand[i].points = self.all_dominos[i].points;
-            // self.player_hand.hand[i].position = Point2 { 
-            //     x: hand_panel_offset_from_start + (i as f32 * card_width) as f32,
-            //     y: hand_panel_y_start
-            // };
             self.player_hand.hand[i].rotation=0.0;
             self.player_hand.hand[i].state=DominoInHandState::Visible(true);
         }
 
-        //let mut second_row_x= hand_panel_offset_from_start  + card_width;
-        //let mut second_row_y = hand_panel_y_start + card_width;
 
         for i in 0..4 {
             self.player_hand.hand[i+6].points = (0,0);
@@ -183,11 +175,10 @@ impl event::EventHandler for MainState {
                    }
                 }
                 if ctx.mouse.button_just_released(MouseButton::Left) { 
-                  // todo self.top_panel.check_boundary_of_deck => draw a card and put it in
+                 
                   // self.player_hand
                   let mouse_position = ctx.mouse.position();
                   if self.top_panel.check_boundary_of_deck(mouse_position) {
-                     //println!("znaesh");
                      if (self.top_panel.lives as i16 - 1 ) < 0 {
                         self.game.game_status= GameStatus::GameLoss;
                         break;
@@ -265,14 +256,12 @@ impl event::EventHandler for MainState {
                     self.game_board.update_skeletons(res);
                     if self.game_board.all_skeletons_are_dead() {
                         self.game.game_status= GameStatus::LevelWon;
-                       // println!("Pechelishhhh yeah");
                     }
                 }
                 
             },
         }
         }
-        //to do the levelwon, gamewon,gameloss etc and toppanel logic
         
         if let GameStatus::LevelWon = self.game.game_status {
             self.top_panel.level+=1;
@@ -292,7 +281,7 @@ impl event::EventHandler for MainState {
             }
 
             //test
-            println!("pechelish level:{} -> {} {} {:?}",self.top_panel.level - 1, self.top_panel.level,self.top_panel.lives,self.top_panel.game_record);
+            //println!("pechelish level:{} -> {} {} {:?}",self.top_panel.level - 1, self.top_panel.level,self.top_panel.lives,self.top_panel.game_record);
             //
 
         }
@@ -312,7 +301,7 @@ impl event::EventHandler for MainState {
             self.game.game_status= GameStatus::LevelInProgress;
 
             //test
-            println!("pechelish igrata {} {} {:?}",self.top_panel.level,self.top_panel.lives,self.top_panel.game_record);
+            //println!("pechelish igrata {} {} {:?}",self.top_panel.level,self.top_panel.lives,self.top_panel.game_record);
             //
         }
         if let GameStatus::GameLoss = self.game.game_status {
@@ -332,7 +321,7 @@ impl event::EventHandler for MainState {
             self.game.game_status= GameStatus::LevelInProgress;
 
             //test
-            println!("gubish igrata {} {} {:?}",self.top_panel.level,self.top_panel.lives,self.top_panel.game_record);
+            //println!("gubish igrata {} {} {:?}",self.top_panel.level,self.top_panel.lives,self.top_panel.game_record);
             //
         }
 

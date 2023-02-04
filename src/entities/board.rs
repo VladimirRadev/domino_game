@@ -248,18 +248,14 @@ impl Board {
             for j in 0 .. self.board[i].len() {
                 let x = starting_x+ (j as f32) * 72.0;
                 let y = starting_y + (i as f32) * 72.0;
-                // println!("\n");
-                // println!("{} {} {} {}",x, y , x + 72.0, y + 72.0);
-                // println!("\n");
+               
                 if (mouse_position.x >= x && mouse_position.x <= x + 72.0) && (mouse_position.y >= y && mouse_position.y <= y + 72.0){
                     possible_index_of_pinned = (i as i32 ,j as i32);
                     break;
                 }
             }
         }
-        //println!("\n\n\n");
-       // println!("{:?} {:?} {:?} {:?}",mouse_position,possible_index_of_pinned,
-        // hand.hand[*index_of_domino_in_hand] , self.board);
+        
         if !((possible_index_of_pinned.0 >= 0 && possible_index_of_pinned.0 <= 7) && (possible_index_of_pinned.1 >= 0 && possible_index_of_pinned.1 <= 7)){
             return  (false,(0,0),(0,0),(10,10));
         }
@@ -284,7 +280,7 @@ impl Board {
             }
             _ => ()
             };
-            //println!("kur");
+          
 
             //skeletons  (pinned,other)
             let mut skeletonHealth : (i16,i16) = (10,10);
@@ -397,7 +393,7 @@ impl Board {
                     _ => (),
                 }
             }
-            //println!("{:?}",matches);
+           
             if matches.contains(&true) {
                 //(bool, (usize,usize) , (usize , usize) , (i16,i16)) 
                 

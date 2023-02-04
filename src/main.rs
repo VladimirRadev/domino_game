@@ -57,8 +57,8 @@ pub fn main() {
     //     println!("{:?}", i);
     // }
    
-    for i in state.player_hand.hand.iter() {
-        println!("{:?}", i);
-    }
+    // for i in state.player_hand.hand.iter() {
+    //     println!("{:?}", i);
+    // }
     event::run(ctx, event_loop, state);
 }

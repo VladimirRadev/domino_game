@@ -80,7 +80,7 @@ impl Hand {
             }
             index+=1;
         }
-        println!("{:?} {}",self.hand[index] , index);
+        //println!("{:?} {}",self.hand[index] , index);
         self.hand[index].points = new_domino.points;
         self.hand[index].rotation=0.0;
         self.hand[index].state= DominoInHandState::Visible(true);
