@@ -16,8 +16,8 @@ impl Hand {
         })
     }
     pub fn update_domino_position(&mut self, index: usize, new_position: Point2<f32> , ctx:&mut ggez::Context, seconds: f32){
-        let x = new_position.x + ctx.mouse.delta().x ;
-        let y= new_position.y + ctx.mouse.delta().y ;
+        let x = new_position.x ;
+        let y= new_position.y ;
        // println!("{} {}",x,y);
         self.hand[index].position=Point2{x,y};
     }
